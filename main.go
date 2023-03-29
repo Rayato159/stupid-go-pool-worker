@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"time"
 )
 
@@ -65,6 +66,10 @@ func main() {
 	}
 
 	for r := 0; r < len(nums); r++ {
+		err := <-errsCh
+		if err != nil {
+			log.Fatal(err)
+		}
 		result := <-resultsCh
 		fmt.Println(result)
 	}
