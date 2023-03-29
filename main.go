@@ -14,16 +14,26 @@ type result struct {
 	sum int
 }
 
-func worker(workId int, jobs <-chan number, results chan<- result) {
-	for job := range jobs {
+func worker(workId int, jobsCh <-chan number, resultsCh chan<- result, errsCh chan<- error) {
+	for job := range jobsCh {
 		fmt.Printf("work_id: %d\n", workId+1)
-		results <- result{sum(job)}
+		sumResult, err := sum(job)
+		if err != nil {
+			errsCh <- err
+			return
+		}
+		// ห้ามลืม!!! ยัด nil ลง errsCh ที่มันว่างทกครั้ง ไม่งั้นมันจะค้างงงง
+		errsCh <- nil
+		resultsCh <- result{sumResult}
 		time.Sleep(2 * time.Second)
 	}
 }
 
-func sum(num number) int {
-	return num.a + num.b
+func sum(num number) (int, error) {
+	if num.a+num.b == 7 {
+		return -1, fmt.Errorf("error!")
+	}
+	return num.a + num.b, nil
 }
 
 func main() {
@@ -42,6 +52,7 @@ func main() {
 
 	jobsCh := make(chan number, len(nums))
 	resultsCh := make(chan result, len(nums))
+	errsCh := make(chan error, len(nums))
 
 	for _, j := range nums {
 		jobsCh <- j
@@ -50,7 +61,7 @@ func main() {
 
 	numWorkers := 2
 	for w := 0; w < numWorkers; w++ {
-		go worker(w, jobsCh, resultsCh)
+		go worker(w, jobsCh, resultsCh, errsCh)
 	}
 
 	for r := 0; r < len(nums); r++ {
