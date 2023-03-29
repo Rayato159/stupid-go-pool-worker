@@ -43,15 +43,15 @@ func main() {
 	jobsCh := make(chan number, len(nums))
 	resultsCh := make(chan result, len(nums))
 
-	numWorkers := 2
-	for w := 0; w < numWorkers; w++ {
-		go worker(w, jobsCh, resultsCh)
-	}
-
 	for _, j := range nums {
 		jobsCh <- j
 	}
 	close(jobsCh)
+
+	numWorkers := 2
+	for w := 0; w < numWorkers; w++ {
+		go worker(w, jobsCh, resultsCh)
+	}
 
 	for r := 0; r < len(nums); r++ {
 		result := <-resultsCh
